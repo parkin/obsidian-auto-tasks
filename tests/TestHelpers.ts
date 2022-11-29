@@ -19,12 +19,10 @@ export function fromLine({
     })!;
 }
 
-type ParentTrack = { indent: number; task: Task } | null;
-
 export function createTasksFromMarkdown(tasksAsMarkdown: string, path: string, precedingHeader: string): Task[] {
     const taskLines = tasksAsMarkdown.split('\n');
     const tasks: Task[] = [];
-    let parentTracker: Array<ParentTrack> = [];
+    let parentTracker: Array<Task> = [];
     for (const line of taskLines) {
         // first parse of task is just to make sure it parses correctly
         const task = Task.fromLine({
@@ -36,16 +34,11 @@ export function createTasksFromMarkdown(tasksAsMarkdown: string, path: string, p
             fallbackDate: null,
         });
         if (task) {
-            // get line indent
-            const lineIndent = line.search(/\S/);
-
-            console.log('lineIndent: ' + lineIndent);
-
             // if our indent is less than the tracker, we need to find which parent this belongs to
-            if (parentTracker.length > 0 && lineIndent <= parentTracker.at(-1)!.indent) {
+            if (parentTracker.length > 0 && task.indentation.length <= parentTracker.at(-1)!.indentation.length) {
                 // we need to pop some from parentTracker
                 for (let i = parentTracker.length - 1; i >= 0; i--) {
-                    if (parentTracker[i]!.indent >= lineIndent) {
+                    if (parentTracker[i]!.indentation.length >= task.indentation.length) {
                         parentTracker.pop();
                     }
                 }
@@ -58,7 +51,7 @@ export function createTasksFromMarkdown(tasksAsMarkdown: string, path: string, p
                 //   - task
 
                 // add the new task as a subtask to the parent
-                parentTracker.at(-1)!.task.pushSubTask(task);
+                parentTracker.at(-1)!.pushSubTask(task);
             } else {
                 // - x
                 //     - x
@@ -68,7 +61,7 @@ export function createTasksFromMarkdown(tasksAsMarkdown: string, path: string, p
             }
 
             // add the new task to the parent tracker
-            parentTracker.push({ indent: lineIndent, task: task });
+            parentTracker.push(task);
         } else {
             // if it's not a task, reset the parent Tracker
             parentTracker = [];
