@@ -139,6 +139,9 @@ export class Task {
 
     public readonly tags: string[];
 
+    public parentTask: Task | null;
+    public subtasks: Task[];
+
     public readonly priority: Priority;
 
     public readonly startDate: Moment | null;
@@ -209,6 +212,9 @@ export class Task {
         this.precedingHeader = precedingHeader;
 
         this.tags = tags;
+
+        this.parentTask = null;
+        this.subtasks = new Array<Task>();
 
         this.priority = priority;
 
@@ -912,5 +918,22 @@ export class Task {
             description = description.replace(globalFilterRegex, '$1$2').replace('  ', ' ').trim();
         }
         return description;
+    }
+
+    /**
+     * Adds the passed subtask to the task's subtask array.
+     * @param subtask new subtask
+     */
+    public pushSubTask(subtask: Task) {
+        this.subtasks.push(subtask);
+        subtask.setParent(this);
+    }
+
+    /**
+     * sets the task's parent task
+     * @param parentTask parent task
+     */
+    private setParent(parentTask: Task) {
+        this.parentTask = parentTask;
     }
 }
